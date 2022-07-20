@@ -10,12 +10,28 @@ import face_recognition
 WEBCAM = cv2.VideoCapture(0)
 
 def get_person(curr_people, new_name):
+    """
+    Check if name exists in dict.
+
+    :param curr_people: dict of current refences and corresponding names
+    :param new_name: name to be checked in curr_people values
+    :returns: if name exists returns corresponding reference else None
+    """
     for reference, corr_name in curr_people:
         if new_name == corr_name:
             return reference
     return None
 
 def create_embeddings(ref, n=5):
+    """
+    Creates and returns dict of embeddings based on n images taken by 
+    WEBCAM.
+
+    :param ref: reference num corresponding to embeddings.
+    :param n: number of images to create embeddings from.
+    :returns: dict with key ref and value embeddings.
+    :raises RuntimeError: webcam not responding.
+    """
     for _ in range(n):
         print("Press 'C' to capture image, 'Q' to quit without saving")
         while True:
