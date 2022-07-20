@@ -9,6 +9,12 @@ import face_recognition
 
 WEBCAM = cv2.VideoCapture(0)
 
+def get_person(curr_people, new_name):
+    for reference, corr_name in curr_people:
+        if new_name == corr_name:
+            return reference
+    return None
+
 def create_embeddings(ref, n=5):
     for _ in range(n):
         print("Press 'C' to capture image, 'Q' to quit without saving")
@@ -43,7 +49,11 @@ if __name__ == "__main__":
     try:
         with open("people.json") as f:
             people = json.load(f)
-        ref = 1 + int(max(list(people.keys())))
+        ref = get_person(people, name)
+        if not ref:
+            ref = 1 + int(max(list(people.keys())))
+        else:
+            print("Replacing " + name)
     except FileNotFoundError:
         people = {}
         ref = 0
