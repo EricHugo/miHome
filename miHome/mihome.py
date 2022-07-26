@@ -14,27 +14,11 @@ def _listener(q):
     while True:
         in_object = q.get()
         print(in_object)
-        if in_onbject == "break":
+        if in_onbject == "done":
             break
 
 
-if __name__ == "__main__":
-    with open("embeddings.pkl", "rb") as f:
-        embeddings = pickle.load(f)
-    known_face_refences = []
-    known_face_encodings = []
-    for ref, embedding_list in embeddings.items():
-        # seperate into lists for the benefit of face_recognition module
-        known_face_refences += [ref for _ in range(len(embedding_list))]
-        known_face_encodings += [embedding for embedding in embedding_list]
-    print(known_face_encodings)
-    print(known_face_refences)
-    with open("people.json") as f:
-        known_people = json.load(f)
-    print(known_people)
-    manager = mp.Manager()
-    q = manager.Queue()
-
+def recognise_faces(encodings, q):
     while True:
         check, frame = WEBCAM.read()
         if not check:
@@ -53,4 +37,32 @@ if __name__ == "__main__":
                 person = known_people[str(match_ind)]
             people.append(person)
         print(people)
+        q.put(people)
+    q.put("done")
 
+
+if __name__ == "__main__":
+    with open("embeddings.pkl", "rb") as f:
+        embeddings = pickle.load(f)
+    known_face_refences = []
+    known_face_encodings = []
+    for ref, embedding_list in embeddings.items():
+        # seperate into lists for the benefit of face_recognition module
+        known_face_refences += [ref for _ in range(len(embedding_list))]
+        known_face_encodings += [embedding for embedding in embedding_list]
+    print(known_face_encodings)
+    print(known_face_refences)
+    with open("people.json") as f:
+        known_people = json.load(f)
+    print(known_people)
+    manager = mp.Manager()
+    q = manager.Queue()
+    pool = mp.Pool(processes=1)
+    jobs = []
+    recognition = pool.apply_async(recognise_faces, (known_face_encodings, q))
+    jobs.append(recognition)
+    for job in jobs:
+        job.get()
+    q.put("break")
+    pool.close()
+    pool.join()
